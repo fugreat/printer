@@ -1,9 +1,32 @@
-  var Trello = require("trello");
-  var trello = new Trello("8bc026302bb0f1cd32ed8ccd13cfd567", "c82c4ea88a838a116216ac53f9cb680c8a991414251b1cd5b852ee99924389b6");
-var boardid="58c0fa31a6e5f859f748b98b";
+var Trello = require("trello");
+var trello = new Trello("8bc026302bb0f1cd32ed8ccd13cfd567", "c82c4ea88a838a116216ac53f9cb680c8a991414251b1cd5b852ee99924389b6");
+
+//var boardid="58c0fa31a6e5f859f748b98b";
+var boardid="58afe1872214f1ef799dad35";
 var cardid="5929f4066dfded9274f83062";
-var labelneedprint="58c0fa31ced82109ffa6058b";
-var labelprinted="58c0fa31ced82109ffa60586"
+var labelneedprint="58afe187ced82109ff71bf20";
+var labelprinted="58afe187ced82109ff71bf1f"
+
+
+
+const Memobird = require('memobird');
+
+const memobird = new Memobird({
+  ak: '9ddb208868a048b296740fe986a9d484',
+  memobirdID: '211af95b23817e56',
+  useridentifying: '459495',
+});
+
+var msg={
+ "needprint":false,
+ "start":"-------  start ----------",
+ "name":"",
+ "desc":"",
+ "owner":"",
+ "end":"-------   end  ----------"
+}
+function pipe(i,j){
+}
 
 
 
@@ -28,14 +51,13 @@ trello.addLabelToCard(cardid, dstid, function (error, del){
    }
 });
 }
-function pipe(i,j){
- console.log("[print]", i,j);
-}
+
 function check(){
 trello.getCardsOnBoard(boardid, function(error, cards){
    if(error){
 	console.log("failed:", error);
    }
+   if(!cards){ return; } 
    cards.forEach(function(card, i, a){
    if(card.labels){
       card.labels.forEach(function(label, i, a){
@@ -43,24 +65,19 @@ trello.getCardsOnBoard(boardid, function(error, cards){
           {
               changeLabel(trello, card.id, labelneedprint, labelprinted); 
               console.log("Find a card need print:", label.name);
-              pipe("----------start-------------");
-              pipe("Task name: ", card.name);
+              msg.name=card.name;
               if(card.badges.description){
-                  pipe("Task desc: ", card.desc);
+	          msg.desc=card.desc;
               }
 	      if(card.idMembers){
                    card.idMembers.forEach(function(idMember){
 			trello.getMember(idMember, function(err, user){
 			if(!err){
-				pipe("Owner: ", user.username);
+			    msg.owner = user.fullName;
+		            msg.needprint = true;
 			}
-                            pipe("---------- end -------------");
 			});
 		   });
-
-	      }else {
-	          pipe("Owner: ", "None. ");
-                  pipe("---------- end -------------");
 	      }
           }
    })
@@ -77,5 +94,19 @@ function  myfunc(Interval){
 
 console.log("Service start");
 var myInterval=setInterval(myfunc,1000,"Interval");
+
+function printacard(){
+  if(msg.needprint){
+  msg.needprint = false;
+  var txt=msg.start + "\n" + "TASK NAME: "+msg.name + "\n" + "TASK DESC: "+ msg.desc + "\n" + "TASK OWNER:" + msg.owner + "\n" + msg.end +"\n";
+  memobird.init()
+  .then(() => memobird.printText(txt))
+  console.log("print:"+ txt);
+  }
+
+
+}
+
+setInterval(printacard,200,"Interval");
 
 
